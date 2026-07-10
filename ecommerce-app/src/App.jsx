@@ -57,16 +57,21 @@ function debounce(fn, delay) {
   }
 }
 
+// Resolve product image — supports local paths and external URLs
+const getProductImage = (image) =>
+  image.startsWith('http') ? image : `${import.meta.env.BASE_URL}${image}`
+
 // ─── ProductCard: renders a single product with Add to Cart ───
 function ProductCard({ product, onAddToCart }) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl">
       <div className="relative aspect-square overflow-hidden bg-slate-100">
         <img
-          src={product.image}
+          src={getProductImage(product.image)}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
+          referrerPolicy="no-referrer"
         />
         <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium capitalize text-brand-600 shadow-sm backdrop-blur">
           {product.category}
@@ -121,7 +126,7 @@ function Cart({ cartItems, onClose, onCheckout }) {
             <ul className="space-y-4">
               {cartItems.map((item) => (
                 <li key={item.id} className="flex items-center gap-4 rounded-xl border border-slate-100 p-3">
-                  <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />
+                  <img src={getProductImage(item.image)} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />
                   <div className="flex-1">
                     <p className="font-medium text-slate-800">{item.name}</p>
                     <p className="text-sm text-slate-500">Qty: {item.quantity}</p>
@@ -292,7 +297,7 @@ function App() {
     setLoading(true)
 
     try {
-      const res = await fetch(FALLBACK_PRODUCTS_URL)
+      const res = await fetch(`${FALLBACK_PRODUCTS_URL}?v=${Date.now()}`)
       if (res.ok) {
         const data = await res.json()
         setPRODUCTS(data)

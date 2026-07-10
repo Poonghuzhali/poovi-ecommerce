@@ -7,7 +7,7 @@ SAMPLE_PRODUCTS = [
         "name": "Smart Home Hub Pro",
         "description": "Voice-controlled smart hub with Wi-Fi, Bluetooth, and Zigbee support for seamless home automation.",
         "price": 4999.00,
-        "image": "https://images.unsplash.com/photo-1730967844913-29eb5cae5f34?w=400&h=400&fit=crop",
+        "image": "images/smart-home-hub.jpg",
         "category": "electronics",
         "tags": ["smart", "home", "automation"],
     },
@@ -93,7 +93,7 @@ class Command(BaseCommand):
         if Product.objects.exists():
             # Update broken image URLs for existing products
             updated = Product.objects.filter(name="Smart Home Hub Pro").update(
-                image="https://images.unsplash.com/photo-1730967844913-29eb5cae5f34?w=400&h=400&fit=crop"
+                image="images/smart-home-hub.jpg"
             )
             if updated:
                 self.stdout.write(self.style.SUCCESS("Updated Smart Home Hub Pro image."))
