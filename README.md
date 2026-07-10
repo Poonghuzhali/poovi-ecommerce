@@ -78,11 +78,20 @@ App runs at: `http://localhost:5173`
 ### Backend — Render (Database + API)
 
 1. Push this repo to GitHub
-2. Go to [render.com](https://render.com) → **New Blueprint** → connect your repo
-3. Render reads `render.yaml` and creates:
-   - PostgreSQL database (`poovi-ecommerce-db`)
-   - Web service (`poovi-ecommerce-api`)
-4. After deploy, copy your API URL (e.g. `https://poovi-ecommerce-api.onrender.com`)
+2. Go to [render.com](https://render.com) → **New Blueprint** → connect repo `Poonghuzhali/poovi-ecommerce`
+3. Click **Apply** — Render creates PostgreSQL + API from `render.yaml`
+4. Wait for build to finish (check **Logs** tab if it fails)
+5. Copy your API URL: `https://poovi-ecommerce-api.onrender.com`
+6. Test health check: `https://poovi-ecommerce-api.onrender.com/api/health/`
+7. Test products: `https://poovi-ecommerce-api.onrender.com/api/products/`
+
+**If a previous deploy failed:** open your Blueprint → click **Manual Sync** (or delete the failed instance and create a new Blueprint).
+
+**Common Render fixes already applied:**
+- `bash build.sh` instead of `./build.sh` (permission fix)
+- `RENDER_EXTERNAL_HOSTNAME` + `.onrender.com` in `ALLOWED_HOSTS`
+- PostgreSQL SSL config via `dj-database-url`
+- Health check at `/api/health/`
 
 ### Frontend — GitHub Pages
 
