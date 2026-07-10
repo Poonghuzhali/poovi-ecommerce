@@ -294,7 +294,7 @@ function App() {
     setLoading(true)
     setLoadError('')
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/products/`, 25000)
+      const res = await fetchWithTimeout(`${API_BASE}/products/`, 8000)
       if (!res.ok) throw new Error(`API returned ${res.status}`)
       const data = await res.json()
       setPRODUCTS(data)
