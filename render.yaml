@@ -7,14 +7,11 @@ databases:
 services:
   - type: web
     name: poovi-ecommerce-api
-    runtime: python
+    runtime: docker
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --no-input
-    startCommand: python manage.py migrate --no-input && python manage.py seed_products && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT --timeout 120
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health/
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.11.2"
       - key: DEBUG
         value: "false"
       - key: CORS_ALLOW_ALL_ORIGINS

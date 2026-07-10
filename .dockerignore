@@ -1,0 +1,11 @@
+ecommerce-app/
+node_modules/
+.git/
+.github/
+staticfiles/
+db.sqlite3
+.env
+*.pyc
+__pycache__/
+.venv/
+venv/
