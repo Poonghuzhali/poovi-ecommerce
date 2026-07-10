@@ -72,7 +72,7 @@ if DATABASE_URL:
             default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require=not DATABASE_URL.startswith('postgres://') or 'sslmode=disable' not in DATABASE_URL,
+            ssl_require=False,
         )
     }
 else:
