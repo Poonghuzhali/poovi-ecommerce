@@ -28,6 +28,21 @@ const appId = typeof __app_id !== 'undefined'
   : import.meta.env.VITE_APP_ID || 'poovi-ecommerce'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
+const FALLBACK_PRODUCTS_URL = `${import.meta.env.BASE_URL}products.json`
+
+// Fetch with timeout — Render free tier can take up to 60s to wake up
+async function fetchWithTimeout(url, timeoutMs = 20000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    clearTimeout(timer)
+    return res
+  } catch (err) {
+    clearTimeout(timer)
+    throw err
+  }
+}
 
 // ─── Utility: format price in Indian Rupees ───
 const formatCurrency = (amount) =>
@@ -269,25 +284,42 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredProducts, setFilteredProducts] = useState([])
   const [orderMessage, setOrderMessage] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [usingFallback, setUsingFallback] = useState(false)
   const [db, setDb] = useState(null)
   const [userId, setUserId] = useState(null)
 
-  // Fetch products from Django API on mount
-  useEffect(() => {
-    const fetchProducts = async () => {
+  // Fetch products from Django API, with local JSON fallback
+  const loadProducts = async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/products/`, 25000)
+      if (!res.ok) throw new Error(`API returned ${res.status}`)
+      const data = await res.json()
+      setPRODUCTS(data)
+      setFilteredProducts(data)
+      setUsingFallback(false)
+    } catch (apiErr) {
+      console.warn('API unavailable, trying fallback:', apiErr.message)
       try {
-        const res = await fetch(`${API_BASE}/products/`)
-        if (!res.ok) throw new Error('Failed to fetch products')
+        const res = await fetch(FALLBACK_PRODUCTS_URL)
+        if (!res.ok) throw new Error('Fallback unavailable')
         const data = await res.json()
         setPRODUCTS(data)
         setFilteredProducts(data)
-      } catch (err) {
-        console.error('Error loading products:', err)
-      } finally {
-        setLoading(false)
+        setUsingFallback(true)
+      } catch (fallbackErr) {
+        console.error('Error loading products:', fallbackErr)
+        setLoadError('Unable to load products. The API server may be starting up — please try again.')
       }
+    } finally {
+      setLoading(false)
     }
-    fetchProducts()
+  }
+
+  useEffect(() => {
+    loadProducts()
   }, [])
 
   // Initialize Firebase and authenticate user
@@ -460,24 +492,42 @@ function App() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center justify-center gap-3 py-20">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600" />
+            <p className="text-sm text-slate-400">Loading products...</p>
+          </div>
+        ) : loadError ? (
+          <div className="py-20 text-center">
+            <p className="mb-4 text-lg text-red-500">{loadError}</p>
+            <button
+              onClick={loadProducts}
+              className="rounded-xl bg-brand-600 px-6 py-2.5 font-semibold text-white transition-all hover:bg-brand-700"
+            >
+              Retry
+            </button>
           </div>
         ) : filteredProducts.length === 0 ? (
           <p className="py-20 text-center text-lg text-slate-400">No products found.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
-          </div>
+          <>
+            {usingFallback && (
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-700">
+                Showing cached products — live API is unavailable. Cart and checkout still work.
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </div>
+          </>
         )}
 
-        {recommendedProducts.length > 0 && (
+        {!loading && !loadError && filteredProducts.length > 0 && recommendedProducts.length > 0 && (
           <Recommendations
             products={recommendedProducts}
             onAddToCart={handleAddToCart}
