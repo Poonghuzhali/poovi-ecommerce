@@ -7,7 +7,7 @@ SAMPLE_PRODUCTS = [
         "name": "Smart Home Hub Pro",
         "description": "Voice-controlled smart hub with Wi-Fi, Bluetooth, and Zigbee support for seamless home automation.",
         "price": 4999.00,
-        "image": "https://images.unsplash.com/photo-1558089062-0d0f39163a09?w=400&h=400&fit=crop",
+        "image": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=400&fit=crop",
         "category": "electronics",
         "tags": ["smart", "home", "automation"],
     },
@@ -91,7 +91,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if Product.objects.exists():
-            self.stdout.write(self.style.WARNING("Products already exist. Skipping seed."))
+            # Update broken image URLs for existing products
+            updated = Product.objects.filter(
+                name="Smart Home Hub Pro",
+                image__contains="photo-1558089062",
+            ).update(
+                image="https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=400&fit=crop"
+            )
+            if updated:
+                self.stdout.write(self.style.SUCCESS("Updated Smart Home Hub Pro image."))
+            else:
+                self.stdout.write(self.style.WARNING("Products already exist. Skipping seed."))
             return
 
         for product_data in SAMPLE_PRODUCTS:
